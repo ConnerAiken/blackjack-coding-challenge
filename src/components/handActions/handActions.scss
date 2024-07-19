@@ -1,0 +1,30 @@
+#handActions {
+  $totalHeight: 100%;
+  .card-title {
+    height: $totalHeight * 0.1;
+  }
+  .card-body {
+    height: $totalHeight * 0.7;
+  }
+  .card-footer {
+    height: $totalHeight * 0.2;
+  }
+
+  .win-legend {
+    color: var(--bs-success);
+  }
+  .tie-legend {
+    color: var(--bs-info);
+  }
+  .loss-legend {
+    color: var(--bs-danger);
+  }
+
+  .action-btn {
+    box-sizing: border-box;
+    width: 40%;
+    height: 60%;
+    margin-left: 2.5%;
+    margin-right: 2.5%;
+  }
+}

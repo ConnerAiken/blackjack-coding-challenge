@@ -1,0 +1,24 @@
+/**
+* The index.scss contains top-level css, it should not include any specific components.
+* This does not get automatically included in every scss file like globals.scss does.
+*/
+@import "primeflex/primeflex.css";
+@import "primeicons/primeicons.css";
+@import "bootstrap/dist/css/bootstrap.min.css";
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  width: 100vw;
+  height: 100vh;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+}

@@ -8,7 +8,7 @@ If you’re not familiar with the game, here are the simplified rules we will be
     2. If the player has a Queen and an Ace, the Ace will be worth 11 points to add up to 21
     3. If the player has a 2 and an Ace, the Ace will be worth 11 points to get closer to 21
     4. If the player has a 2 and a 5, and then draws an Ace, the Ace will be worth 11 points to get closer to 21. If the player then draws a 10, the Ace will now be worth 1 point
-3. The House is initially dealt TWO face up cards and no more! This isn’t part of the regular rules for Blackjack, but it is for us. In other words, the House will always only have 2 cards.
+3. The House is initially dealt TWO face up cards and no more! **This isn’t part of the regular rules for Blackjack**, but it is for us. In other words, **the House will always only have 2 cards**.
 4. You are also initially dealt two face up cards, but you have one of the following options:
     1. Hit: You are dealt one more card to add to your point value. For this project, the player may hit as many times as they like, until their card value exceeds 21, at which point the game ends in an automatic loss
     2. Stand: Ends the round (for the purposes of this project, this will end the game)
@@ -45,4 +45,20 @@ A very optional additional element to this project is writing it in our current 
 
 ### Deliverable
 
-Please deliver this as a cloneable git repo
+Please deliver this as a cloneable git repo 
+
+
+# Outstanding questions
+- Should user be able to stand after draw?
+- Should we consider a tie?
+
+# TODOs
+- Add goodbye handler for window redirect/close events
+- Middleware or slices for recording history
+
+# Testing Edge Cases
+- Dealer draws when 0 are remaining (expected to pull 2 cards) => Great
+- Dealer draws when 1 are remaining (expected to pull 2 cards) => 1 straggler in Dealer's pile
+- Player has first draw when 0 are remaining (expected to pull 2 cards) => Great
+- Player has first draw when 1 are remaining (expected to pull 2 cards) => 1 straggler in Dealer's pile
+- Player has second draw when 0 are remaining (expected to pull 1 card) => Big fuck up
