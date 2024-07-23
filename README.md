@@ -32,3 +32,7 @@ I created some Jest tests for the business logic of the application, if this was
 - Git clone the repo
 - Run `npm install`
 - Run `npm run test`
+
+## Author Notes
+
+This is not optimized for retina displays, I developed on a 4k screen and 1920x1080
