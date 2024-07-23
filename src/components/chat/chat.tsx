@@ -23,12 +23,9 @@ export default function Chat() {
 
   // Remove the welcome message
   useEffect(() => {
-    const timer = setTimeout(() => {
+    setTimeout(() => {
       setMessages((currentMessages) => currentMessages.filter((message) => message.timestamp !== "none"));
-    }, 30000);
-
-    // Avoid stale state issues
-    return () => clearTimeout(timer);
+    }, 10000);
   }, []);
 
   // As games are played, the chat bot will respond to the results
@@ -43,14 +40,11 @@ export default function Chat() {
         },
       ]);
 
-      const timer = setTimeout(() => {
+      setTimeout(() => {
         setMessages((currentMessages) =>
           currentMessages.filter((message) => message.timestamp !== lastGame.timestamp),
         );
-      }, 30000);
-
-      // Avoid stale state issues
-      return () => clearTimeout(timer);
+      }, 10000);
     }
   }, [history]);
 
