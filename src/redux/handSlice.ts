@@ -14,7 +14,6 @@ export interface HandState {
     none?: PlayingCard[];
   };
   firstDraw: boolean;
-  partialDraw: boolean;
   gameStatus: GameStatusEnum;
   gameResult?: GameResultEnum;
 }
@@ -29,7 +28,6 @@ export const initialState: HandState = {
   },
   remaining: 0,
   firstDraw: true,
-  partialDraw: false,
   gameStatus: GameStatusEnum.STARTING,
   gameResult: GameResultEnum.UNDETERMINED,
 };
@@ -96,6 +94,9 @@ const handSlice = createSlice({
       state.cards.dealer = action.payload.cards.dealer;
       state.cards.none = action.payload.cards.none;
       state.gameStatus = action.payload.gameStatus;
+
+      // Check to see if the dealer drew a blackjack
+      determineHandStatus(state);
     },
     /**
      * This function sets the card state for individual roles
@@ -133,7 +134,6 @@ const handSlice = createSlice({
     setGameStatus: (state, action: PayloadAction<GameStatusEnum>) => {
       state.gameStatus = action.payload;
     },
-
     /**
      * This function resets the state back to the start of the game
      * @param state

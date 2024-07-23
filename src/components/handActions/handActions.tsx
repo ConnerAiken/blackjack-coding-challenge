@@ -1,3 +1,4 @@
+import React from "react";
 import { RootState } from "../../redux/store";
 import { useSelector } from "react-redux";
 import { GameResultEnum, GameStatusEnum } from "../../types";
@@ -6,6 +7,7 @@ import { Button, Card, ProgressBar } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHand, faHandPointDown, faSquare, faWandSparkles } from "@fortawesome/free-solid-svg-icons";
 import { getTotalValue } from "../../utils";
+import { useEffect } from "react";
 
 interface HandActionsProps {
   isFetchingCards: boolean;
@@ -17,10 +19,11 @@ export default function HandActions(props: HandActionsProps) {
   const playerCards = useSelector((state: RootState) => state.hand.cards.player);
   const dealerCards = useSelector((state: RootState) => state.hand.cards.dealer);
   const gameStatus = useSelector((state: RootState) => state.hand.gameStatus);
+  const deckId = useSelector((state: RootState) => state.hand.deckId);
   const wins = history.filter((game) => game.result === GameResultEnum.WIN).length;
   const losses = history.filter((game) => game.result === GameResultEnum.LOSE).length;
   const ties = history.filter((game) => game.result === GameResultEnum.DRAW).length;
-
+  const [actionsDisabled, setActionsDisabled] = React.useState(false);
   /**
    * Gets the win/lose/tie percentage
    * @param type Expects the length of 'losses', 'wins', or 'ties'
@@ -35,6 +38,14 @@ export default function HandActions(props: HandActionsProps) {
 
     return (type / totalGames) * 100;
   };
+
+  useEffect(() => {
+    setTimeout(() => {
+      if (actionsDisabled) {
+        setActionsDisabled(false);
+      }
+    }, 2000);
+  }, [actionsDisabled]);
 
   return (
     <Card id="handActions">
@@ -82,6 +93,8 @@ export default function HandActions(props: HandActionsProps) {
         <hr />
         <Card.Text>Once the dealer has dealt, it is your turn to play.</Card.Text>
         <Card.Text>
+          <b> Deck ID: {deckId}</b>
+          <br />
           <b> Dealer Total: {getTotalValue(dealerCards)}</b>
           <br />
           <b> Your Total: {getTotalValue(playerCards)}</b>
@@ -92,11 +105,12 @@ export default function HandActions(props: HandActionsProps) {
         <Button
           className="action-btn"
           variant="success"
-          onClick={props.onHit}
+          onClick={() => {
+            props.onHit();
+            setActionsDisabled(true);
+          }}
           disabled={
-            gameStatus === GameStatusEnum.STARTING ||
-            gameStatus === GameStatusEnum.OVER ||
-            props.isFetchingCards
+            gameStatus === GameStatusEnum.STARTING || gameStatus === GameStatusEnum.OVER || actionsDisabled
           }
         >
           <FontAwesomeIcon icon={faHandPointDown} style={{ color: "white" }} />
@@ -105,11 +119,12 @@ export default function HandActions(props: HandActionsProps) {
         <Button
           className="action-btn"
           variant="primary"
-          onClick={props.onStay}
+          onClick={() => {
+            props.onStay();
+            setActionsDisabled(true);
+          }}
           disabled={
-            gameStatus === GameStatusEnum.STARTING ||
-            gameStatus === GameStatusEnum.OVER ||
-            props.isFetchingCards
+            gameStatus === GameStatusEnum.STARTING || gameStatus === GameStatusEnum.OVER || actionsDisabled
           }
         >
           <FontAwesomeIcon icon={faHand} style={{ color: "white" }} />

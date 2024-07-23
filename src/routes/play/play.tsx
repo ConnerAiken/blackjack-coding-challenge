@@ -6,7 +6,14 @@ import {
 } from "../../services/blackjack";
 import { Fragment, useEffect } from "react";
 import { useSelector } from "react-redux";
-import { GameResult, GameResultEnum, GameStatus, GameStatusEnum, PileTypeEnum } from "../../types";
+import {
+  GameResult,
+  GameResultEnum,
+  GameStatus,
+  GameStatusEnum,
+  PileTypeEnum,
+  PlayingCard,
+} from "../../types";
 import historySlice from "../../redux/historySlice";
 import { RootState, store } from "../../redux/store";
 import "./play.scss";
@@ -39,8 +46,7 @@ import { getTotalValue } from "../../utils";
 
 interface DrawState {
   firstDraw: boolean;
-  partialDraw: boolean;
-  partialCards: any[];
+  partialCards: PlayingCard[];
 }
 
 const Play = () => {
@@ -101,16 +107,26 @@ const Play = () => {
    * This function handles the player hitting their hand
    */
   const handleHitAction = async (drawInfo: DrawState) => {
-    let drawCount: number = drawInfo.firstDraw ? 2 : 1;
-
-    if (drawInfo.firstDraw && drawInfo.partialDraw) {
-      drawCount = 1;
-    } else if (drawInfo.firstDraw && !drawInfo.partialDraw) {
-      drawCount = 2;
-    }
+    const drawCount = drawInfo.firstDraw ? 2 : 1;
 
     const { data: deckData } = await drawTrigger({ deck_id: deckId, card_count: drawCount }, false);
     const newCards = [...playerCards, ...deckData.cards, ...drawInfo.partialCards];
+
+    // Add any cards returned at all (may be partial draw) to the player's pile
+    await addToPileTrigger({
+      player: PileTypeEnum.PLAYER,
+      deck_id: deckId,
+      cards: newCards,
+    });
+
+    if (deckData.cards.length < drawCount) {
+      const isFirstDraw = drawCount === 2 && newCards.length === 0 ? true : false;
+      await reshuffleDeck(handleHitAction, {
+        firstDraw: isFirstDraw,
+        partialCards: deckData.cards,
+      });
+      return;
+    }
 
     store.dispatch(
       handSlice.actions.setGameInfo({
@@ -125,27 +141,6 @@ const Play = () => {
       }),
     );
 
-    // Add any cards returned at all (may be partial draw) to the player's pile
-    await addToPileTrigger({
-      player: PileTypeEnum.PLAYER,
-      deck_id: deckId,
-      cards: newCards,
-    });
-
-    // If this was a partial draw or no cards were drawn, reshuffle the deck and repeat the action
-    if (!deckData.success && deckData.error.includes("Not enough cards remaining")) {
-      drawInfo.partialDraw = drawCount === 2 && newCards.length === 1;
-      drawInfo.partialCards = newCards;
-      reshuffleDeck(handleHitAction, drawInfo);
-      return;
-    }
-
-    // Reset
-    drawInfo.partialCards = [];
-    drawInfo.partialDraw = false;
-
-    store.dispatch(handSlice.actions.determineHandStatus());
-
     // Play sfx
     playCardPlaceSfx();
   };
@@ -154,16 +149,33 @@ const Play = () => {
    * This function handles the dealer drawing the initial hand
    */
   const drawHand = async (drawInfo: DrawState) => {
-    const drawCount = drawInfo.partialDraw ? 1 : 2;
+    const drawCount = drawInfo.firstDraw ? 2 : 1;
 
     // Determine card count
     const { data: deckData } = await drawTrigger({ deck_id: deckId, card_count: drawCount }, false);
+    const newCards = [...dealerCards, ...deckData.cards, ...drawInfo.partialCards];
+
+    // Add any cards returned at all (may be partial draw) to the dealer's pile
+    await addToPileTrigger({
+      player: PileTypeEnum.DEALER,
+      deck_id: deckData.deck_id,
+      cards: newCards,
+    });
+
+    if (deckData.cards.length < drawCount) {
+      const isFirstDraw = drawCount === 2 && newCards.length === 0 ? true : false;
+      await reshuffleDeck(drawHand, {
+        firstDraw: isFirstDraw,
+        partialCards: deckData.cards,
+      });
+      return;
+    }
 
     // Dispatch all our updates
     store.dispatch(
       handSlice.actions.setGameInfo({
         cards: {
-          dealer: [...dealerCards, ...deckData.cards, ...drawInfo.partialCards],
+          dealer: newCards,
           player: playerCards,
           none: noneCards,
         },
@@ -172,28 +184,6 @@ const Play = () => {
         gameStatus: GameStatusEnum.STARTED,
       }),
     );
-
-    // Add any cards returned at all (may be partial draw) to the dealer's pile
-    await addToPileTrigger({
-      player: PileTypeEnum.DEALER,
-      deck_id: deckData.deck_id,
-      cards: deckData.cards,
-    });
-
-    // Check to see if there are enough cards left in the deck
-    if (!deckData.success && deckData.error.includes("Not enough cards remaining")) {
-      drawInfo.partialDraw = drawCount === 2 && deckData.cards.length === 1;
-      drawInfo.partialCards = deckData.cards;
-      reshuffleDeck(drawHand, drawInfo);
-      return;
-    }
-
-    // Reset
-    drawInfo.partialCards = [];
-    drawInfo.partialDraw = false;
-
-    // Check to see if the dealer drew a blackjack
-    store.dispatch(handSlice.actions.determineHandStatus());
   };
 
   /**
@@ -205,13 +195,12 @@ const Play = () => {
   useEffect(() => {
     // Hit the dealer with the first two cards and commence the game
     if (gameStatus === GameStatusEnum.STARTING) {
-      setTimeout(() => {
-        drawHand({
-          firstDraw: true,
-          partialDraw: false,
-          partialCards: [],
-        });
+      drawHand({
+        firstDraw: true,
+        partialCards: [],
+      });
 
+      setTimeout(() => {
         // Play sfx
         playCardFanSfx();
       }, 2500);
@@ -221,7 +210,6 @@ const Play = () => {
     if (gameStatus === GameStatusEnum.STARTED) {
       handleHitAction({
         firstDraw: true,
-        partialDraw: false,
         partialCards: [],
       });
     }
@@ -373,7 +361,6 @@ const Play = () => {
             onHit={() => {
               handleHitAction({
                 firstDraw: false,
-                partialDraw: false,
                 partialCards: [],
               });
             }}
